@@ -6,7 +6,8 @@ WordPress REST API Authentication
 
 - wp-admin 으로 접속 후 설정 -> 고유주소 설정 -> 고유주소 구조를 글 이름 으로 설정
 
-## .htaccess setting : 아래의 내용을 .htaccess에 붙여넣으세요.
+## .htaccess setting 
+아래의 내용을 .htaccess에 붙여넣기
 ```
 <IfModule mod_rewrite.c>
 RewriteEngine On
