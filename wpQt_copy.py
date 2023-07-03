@@ -39,6 +39,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.descLabel.setWordWrap(True)
         self.verticalLayout.addWidget(self.descLabel)
 
+        self.progressBar = QtWidgets.QProgressBar(self.centralwidget)
+        self.progressBar.setMinimum(0)
+        self.progressBar.setMaximum(0)  # Set initial maximum value to 0
+        self.progressBar.setValue(0)
+        self.verticalLayout.addWidget(self.progressBar)
+
         self.resultTextBox = QtWidgets.QPlainTextEdit(self.centralwidget)
         self.verticalLayout.addWidget(self.resultTextBox)
 
@@ -84,12 +90,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         spacer = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacer)
-
-        self.progressBar = QtWidgets.QProgressBar(self.centralwidget)
-        self.progressBar.setMinimum(0)
-        self.progressBar.setMaximum(100)
-        self.progressBar.setValue(0)
-        self.verticalLayout.addWidget(self.progressBar)
 
         self.postButton = QtWidgets.QPushButton(self.centralwidget)
         self.postButton.setText("Run")
@@ -218,7 +218,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.wpUrlLineEdit.setEnabled(False)
         self.numberComboBox.setEnabled(False)
 
-        self.progressBar.setValue(0)# Set maximum to 0 initially
+        self.progressBar.setMaximum(0)  # Set maximum to 0 initially
         self.loading_screen = LoadingScreen()  # Create an instance of LoadingScreen
         self.loading_screen.show()
 
@@ -248,7 +248,7 @@ class LoadingScreen(QtWidgets.QWidget):
     def __init__(self):
         super(LoadingScreen, self).__init__()
         self.setWindowTitle("Loading")
-        self.setFixedSize(300, 200)
+        self.setFixedSize(200, 100)
         self.progressBar = QtWidgets.QProgressBar(self)
         self.progressBar.setFixedSize(150, 20)
         self.progressBar.setRange(0, 0)  # Set the progress bar to animate
