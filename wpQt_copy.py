@@ -72,8 +72,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.descLabel.setText("<CENTER><h1>AutoPosting v0.2.0</CENTER></h1>")
         self.descLabel.setWordWrap(True)
         self.verticalLayout.addWidget(self.descLabel)
-
-        self.resultTextBox = QtWidgets.QPlainTextEdit(self.centralwidget)
+        
+        self.resultTextBox = QtWidgets.QTextEdit(self.centralwidget)
         self.verticalLayout.addWidget(self.resultTextBox)
 
         formLayout = QtWidgets.QFormLayout()
@@ -167,7 +167,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 border-radius: 5px;
                 padding: 10px;
             }
-            QPlainTextEdit {
+            QTextEdit {
                 background-color: #f2f2f2;
                 font-size: 16px;
                 border: 1px solid #ccc;
@@ -217,16 +217,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
         openai.api_key = api_key
 
-        progress_step = 100 // post_count
+        total_steps = post_count * len(topics_list)
+        current_step = 0
 
-        for i, topic in enumerate(topics_list, start=1):
-            content = self.generate_content(topic)
-            self.create_wordpress_post(topic, content, username, password, wp_url)
-            self.progressBar.setValue(i * progress_step)
+        for topic in topics_list:
+            for i in range(post_count):
+                content = self.generate_content(topic)
+                self.create_wordpress_post(topic, content, username, password, wp_url)
+                current_step += 1
+                progress_value = int(current_step / total_steps * 100)
+                self.progressBar.setValue(progress_value)
+
 
 
     def create_wordpress_post(self, topic, content, username, password, wp_url):
-        #user_topic = self.topicLineEdit.text().split(',')
         translator = Translator()
         translated_topic = translator.translate(topic, dest='en').text
         image_url = f"https://source.unsplash.com/featured/?{translated_topic}"

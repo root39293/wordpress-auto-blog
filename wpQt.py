@@ -3,8 +3,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import openai
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWidgets import QMessageBox
-
-
+from googletrans import Translator
+import requests
 
 
 class Worker(QThread):
@@ -72,8 +72,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.descLabel.setText("<CENTER><h1>AutoPosting v0.2.0</CENTER></h1>")
         self.descLabel.setWordWrap(True)
         self.verticalLayout.addWidget(self.descLabel)
-
-        self.resultTextBox = QtWidgets.QPlainTextEdit(self.centralwidget)
+        
+        self.resultTextBox = QtWidgets.QTextEdit(self.centralwidget)
         self.verticalLayout.addWidget(self.resultTextBox)
 
         formLayout = QtWidgets.QFormLayout()
@@ -167,7 +167,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 border-radius: 5px;
                 padding: 10px;
             }
-            QPlainTextEdit {
+            QTextEdit {
                 background-color: #f2f2f2;
                 font-size: 16px;
                 border: 1px solid #ccc;
@@ -217,14 +217,24 @@ class MainWindow(QtWidgets.QMainWindow):
 
         openai.api_key = api_key
 
-        progress_step = 100 // post_count
+        total_steps = post_count * len(topics_list)
+        current_step = 0
 
-        for i, topic in enumerate(topics_list, start=1):
-            content = self.generate_content(topic)
-            self.create_wordpress_post(topic, content, username, password, wp_url)
-            self.progressBar.setValue(i * progress_step)
+        for topic in topics_list:
+            for i in range(post_count):
+                content = self.generate_content(topic)
+                self.create_wordpress_post(topic, content, username, password, wp_url)
+                current_step += 1
+                progress_value = int(current_step / total_steps * 100)
+                self.progressBar.setValue(progress_value)
+
+
 
     def create_wordpress_post(self, topic, content, username, password, wp_url):
+        translator = Translator()
+        translated_topic = translator.translate(topic, dest='en').text
+        image_url = f"https://source.unsplash.com/featured/?{translated_topic}"
+
         wordpress_url = wp_url + '/wp-json/wp/v2/posts'
 
         headers = {
@@ -233,12 +243,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         data = {
             'title': topic,
-            'content': content,
+            'content': f'<img src="{image_url}">\n\n{content}',
             'status': 'publish',
         }
 
         response = requests.post(wordpress_url, headers=headers, json=data, auth=(username, password))
         response.raise_for_status()
+
 
     def generate_content(self, topic):
         completion = openai.ChatCompletion.create(
@@ -261,7 +272,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system",
-                    "content": f"당신은 이제부터 블로그 주제를 생성하는 역할을 맡습니다. 사용자가 제시하는 대주제에 대해 블로그 포스팅 주제를 정하고 핵심 포스팅 제목만 출력합니다. 각 주제는 개행으로 구별되며, {count}개의 포스팅 주제를 출력하세요."},
+                    "content": f"당신은 이제부터 블로그 주제를 생성하는 역할을 맡습니다. 사용자가 제시하는 대주제에 대해 블로그 포스팅 주제를 정하고 핵심 블로그 포스팅 제목만 출력합니다. 각 주제는 개행으로 구별되며, {count}개의 포스팅 주제를 출력하세요. 부제는 입력하지 않습니다."},
                     {"role": "user", "content": f"{topic}에 대한 {count}개의 블로그 주제를 생성해주세요."}
                 ]
             )
