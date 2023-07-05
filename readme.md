@@ -1,13 +1,14 @@
 ## 플러그인 설치목록
 	
-WordPress REST API Authentication
+WordPress REST API Authentication 설치
+ID/PW Authentication 설정
 
 ## 환경 세팅 절차
 
 - wp-admin 으로 접속 후 설정 -> 고유주소 설정 -> 고유주소 구조를 글 이름 으로 설정
 
 ## .htaccess setting 
-아래의 내용을 .htaccess에 붙여넣기
+아래의 내용을 서버 경로 .htaccess에 붙여넣기
 ```
 <IfModule mod_rewrite.c>
 RewriteEngine On
