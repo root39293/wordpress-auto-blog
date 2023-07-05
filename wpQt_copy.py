@@ -4,8 +4,6 @@ import openai
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWidgets import QMessageBox
 from googletrans import Translator
-import requests
-
 
 class Worker(QThread):
     taskFinished = pyqtSignal(str, bool)
@@ -20,7 +18,8 @@ class Worker(QThread):
             topics_list = self.mainWindow.generate_topics()
             self.mainWindow.show_topics_list(topics_list)
             self.mainWindow.postToWordPress(topics_list)
-            self.taskFinished.emit("성공적으로 글이 게시되었습니다!", True)
+            self.taskFinished.emit("[결과] 작업이 완료되었습니다.", True)
+            self.mainWindow.progressBar.setValue(100)
         except Exception as err:
             self.taskFinished.emit(str(err), False)
 
@@ -72,8 +71,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.descLabel.setText("<CENTER><h1>AutoPosting v0.2.0</CENTER></h1>")
         self.descLabel.setWordWrap(True)
         self.verticalLayout.addWidget(self.descLabel)
-        
-        self.resultTextBox = QtWidgets.QTextEdit(self.centralwidget)
+
+        self.resultTextBox = QtWidgets.QPlainTextEdit(self.centralwidget)
         self.verticalLayout.addWidget(self.resultTextBox)
 
         formLayout = QtWidgets.QFormLayout()
@@ -167,7 +166,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 border-radius: 5px;
                 padding: 10px;
             }
-            QTextEdit {
+            QPlainTextEdit {
                 background-color: #f2f2f2;
                 font-size: 16px;
                 border: 1px solid #ccc;
@@ -207,7 +206,6 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.timer.stop()
 
-
     def postToWordPress(self, topics_list):
         post_count = int(self.numberSpinBox.value())
         api_key = self.apiKeyLineEdit.text()
@@ -217,19 +215,27 @@ class MainWindow(QtWidgets.QMainWindow):
 
         openai.api_key = api_key
 
-        total_steps = post_count * len(topics_list)
-        current_step = 0
+        progress_step = 100 // post_count
 
-        for topic in topics_list:
-            for i in range(post_count):
-                content = self.generate_content(topic)
+        for i, topic in enumerate(topics_list, start=0):
+            self.resultTextBox.appendPlainText(f"\n[진행 중] '{topic}'에 대한 글 작성 중...")
+            content = self.generate_content(topic)
+            try:
                 self.create_wordpress_post(topic, content, username, password, wp_url)
-                current_step += 1
-                progress_value = int(current_step / total_steps * 100)
-                self.progressBar.setValue(progress_value)
+                self.handle_posting_result(f"[완료] '{topic}'에 대한 글 게시됨")
+                self.progressBar.setValue(int(i/2) * progress_step)
+            except Exception as err:
+                self.handle_posting_result(f"[실패] '{topic}'에 대한 글 게시 [실패]: {str(err)}")
+
+    def handle_posting_result(self, result):
+        # UI 업데이트는 메인 UI 스레드에서 처리해야 함
+        QtCore.QMetaObject.invokeMethod(self, "update_result_textbox", QtCore.Qt.QueuedConnection, QtCore.Q_ARG(str, result))
 
 
-
+    @QtCore.pyqtSlot(str)
+    def update_result_textbox(self, result):
+        self.resultTextBox.appendPlainText(result)
+    
     def create_wordpress_post(self, topic, content, username, password, wp_url):
         translator = Translator()
         translated_topic = translator.translate(topic, dest='en').text
@@ -250,7 +256,6 @@ class MainWindow(QtWidgets.QMainWindow):
         response = requests.post(wordpress_url, headers=headers, json=data, auth=(username, password))
         response.raise_for_status()
 
-
     def generate_content(self, topic):
         completion = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -268,23 +273,33 @@ class MainWindow(QtWidgets.QMainWindow):
         entire_topic_list = []
 
         for topic in topics:
-            completion = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system",
-                    "content": f"당신은 이제부터 블로그 주제를 생성하는 역할을 맡습니다. 사용자가 제시하는 대주제에 대해 블로그 포스팅 주제를 정하고 핵심 블로그 포스팅 제목만 출력합니다. 각 주제는 개행으로 구별되며, {count}개의 포스팅 주제를 출력하세요. 부제는 입력하지 않습니다."},
-                    {"role": "user", "content": f"{topic}에 대한 {count}개의 블로그 주제를 생성해주세요."}
-                ]
-            )
-            topics_str = completion.choices[0].message['content']
-            topics_list = [topic.replace('\"', '').strip() for topic in topics_str.split('\n') if topic.strip()]
+            topic = topic.strip()
+            if topic: 
+                try:
+                    completion = openai.ChatCompletion.create(
+                        model="gpt-3.5-turbo",
+                        messages=[
+                            {"role": "system",
+                            "content": f"당신은 이제부터 블로그 주제를 생성하는 역할을 맡습니다. 사용자가 제시하는 큰 주제에 대해 블로그 포스팅 주제를 정하고 핵심 포스팅 제목만 출력합니다. 제목은 짧고 핵심적인 내용만 담습니다. 각 주제는 개행으로 구별해야합니다. 출력값은 {count}줄로 출력합니다."},
+                            {"role": "user", "content": f"{topic}에 대한 {count}개의 블로그 주제를 생성해주세요."}
+                        ]
+                    )
+                    topics_str = completion.choices[0].message['content']
+                    topics_list = [topic.replace('\"', '').strip() for topic in topics_str.split('\n') if topic.strip()]
 
-            if topics_list:
-                topics_str_without_number = '\n'.join([topic.split('. ')[1] for topic in topics_list])
-                topics_list_without_number = [topic for topic in topics_str_without_number.split('\n') if topic.strip()]
-                entire_topic_list.extend(topics_list_without_number)
-    
+                    for topic in topics_list:
+                        topic_parts = topic.split('. ')
+                        if len(topic_parts) > 1:
+                            topic_without_number = topic_parts[1]
+                        else:
+                            topic_without_number = topic_parts[0]
+
+                        topic_without_extra_symbols = topic_without_number.split('-')[0].split(':')[0]
+                        entire_topic_list.append(topic_without_extra_symbols)
+                except Exception as e:
+                    return e
         return entire_topic_list
+    
 
 
 
@@ -295,12 +310,12 @@ class MainWindow(QtWidgets.QMainWindow):
     def start_worker(self):
         topic = self.topicLineEdit.text()
         api_key = self.apiKeyLineEdit.text()
-        post_count = int(self.numberSpinBox.text())  # 수정된 부분
+        post_count = int(self.numberSpinBox.text()) 
         username = self.usernameLineEdit.text()
         password = self.passwordLineEdit.text()
         wp_url = self.wpUrlLineEdit.text()
         if not all([topic, api_key, post_count, username, password, wp_url]):
-            self.resultTextBox.appendPlainText("실패: 모든 필드를 유효한 값으로 채워주세요.")
+            self.resultTextBox.appendPlainText(f"\n [오류] 모든 필드를 유효한 값으로 채워주세요.")
             return
         openai.api_key = api_key
 
@@ -314,19 +329,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.progressBar.setValue(0)
 
-        self.worker = Worker(self)  
+        self.worker = Worker(self)
         self.worker.taskFinished.connect(self.handle_results)
         self.worker.start()
-
-
 
 
     @QtCore.pyqtSlot(str, bool)
     def handle_results(self, result, status):
         if status:
-            self.resultTextBox.appendPlainText(f"\n{result}")
+            self.resultTextBox.appendPlainText(f"\n {result}")
         else:
-            self.resultTextBox.appendPlainText(f"\n실패: {result}")
+            self.resultTextBox.appendPlainText(f"\n [실패] 유효한 API 키 및 입력 값들을 확인하세요.")
 
         self.postButton.setEnabled(True)
         self.topicLineEdit.setEnabled(True)
