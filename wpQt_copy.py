@@ -5,6 +5,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWidgets import QMessageBox
 from googletrans import Translator
 
+
 class Worker(QThread):
     taskFinished = pyqtSignal(str, bool)
 
@@ -25,7 +26,6 @@ class Worker(QThread):
 
 
 class MainWindow(QtWidgets.QMainWindow):
-
     def __init__(self):
         super(MainWindow, self).__init__()
         self.setWindowTitle("Auto Posting")
@@ -33,7 +33,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setupUi()
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.start_worker)
-
 
     def addRow(self, formLayout, labelText, echoMode=None):
         label = QtWidgets.QLabel(self.centralwidget)
@@ -43,24 +42,23 @@ class MainWindow(QtWidgets.QMainWindow):
             lineEdit.setEchoMode(echoMode)
         formLayout.addRow(label, lineEdit)
         return lineEdit
-    
 
     def show_usage(self):
         usage_text = "<h3><CENTER>How to Use</CENTER></h3><br>"
         usage_text += "<p style='font-size: 15px;'>1. 'Topic' 필드에 블로그 주제를 입력합니다. 여러 주제를 입력하려면 쉼표로 구분합니다. (ex. 주제1, 주제2, 주제3)</p><br>"
-        usage_text += "<p style='font-size: 15px;'>2. 'API Key' 필드에 OpenAI API 키를 입력합니다.</p><br>"
+        usage_text += (
+            "<p style='font-size: 15px;'>2. 'API Key' 필드에 OpenAI API 키를 입력합니다.</p><br>"
+        )
         usage_text += "<p style='font-size: 15px;'>3. 'WordPress Username'과 'WordPress Password' 필드에 WordPress 계정 정보를 입력합니다.</p><br>"
         usage_text += "<p style='font-size: 15px;'>4. 'WordPress URL' 필드에 WordPress 사이트 URL을 입력합니다. (URL의 마지막에 '/'는 포함하지 않습니다)</p><br>"
         usage_text += "<p style='font-size: 15px;'>5. 'Number of Posting' 스핀 박스에서 게시할 포스팅 개수를 선택합니다.</p><br>"
         usage_text += "<p style='font-size: 15px;'>6. 'Enable Auto Posting' 체크박스를 선택하고 자동 게시 간격을 설정하면 일정 시간마다 포스팅이 자동으로 게시됩니다.</p><br>"
-        usage_text += "<p style='font-size: 15px;'>7. 'Run' 버튼을 클릭하여 포스팅 작성 및 게시를 시작합니다.</p><br>"
+        usage_text += (
+            "<p style='font-size: 15px;'>7. 'Run' 버튼을 클릭하여 포스팅 작성 및 게시를 시작합니다.</p><br>"
+        )
         usage_text += "<p style='font-size: 15px;'><b>※ 주의사항:</b> 프로그램을 사용하기 전에 OpenAI API 키와 WordPress 계정 정보를 정확히 입력해야 합니다.</p><br>"
 
         QMessageBox.information(self, "How to Use", usage_text)
-
-
-
-
 
     def setupUi(self):
         self.centralwidget = QtWidgets.QWidget(self)
@@ -79,12 +77,14 @@ class MainWindow(QtWidgets.QMainWindow):
         formLayout.setLabelAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         formLayout.setFormAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignTop)
 
-
-
         self.topicLineEdit = self.addRow(formLayout, "Topic: ")
-        self.apiKeyLineEdit = self.addRow(formLayout, "API Key:", QtWidgets.QLineEdit.Password)
+        self.apiKeyLineEdit = self.addRow(
+            formLayout, "API Key:", QtWidgets.QLineEdit.Password
+        )
         self.usernameLineEdit = self.addRow(formLayout, "WordPress Username:")
-        self.passwordLineEdit = self.addRow(formLayout, "WordPress Password:", QtWidgets.QLineEdit.Password)
+        self.passwordLineEdit = self.addRow(
+            formLayout, "WordPress Password:", QtWidgets.QLineEdit.Password
+        )
         self.wpUrlLineEdit = self.addRow(formLayout, "WordPress URL:")
 
         self.numberLabel = QtWidgets.QLabel(self.centralwidget)
@@ -96,16 +96,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
         formLayout.addRow(self.numberLabel, self.numberSpinBox)
 
-        self.autoPostCheckBox = QtWidgets.QCheckBox("Enable Auto Posting", self.centralwidget)
+        self.autoPostCheckBox = QtWidgets.QCheckBox(
+            "Enable Auto Posting", self.centralwidget
+        )
         self.autoPostIntervalSpinBox = QtWidgets.QSpinBox(self.centralwidget)
         self.autoPostIntervalSpinBox.setRange(1, 60)
-        self.autoPostIntervalSpinBox.setSuffix(' min')
+        self.autoPostIntervalSpinBox.setSuffix(" min")
         self.autoPostIntervalSpinBox.setValue(30)
         formLayout.addRow(self.autoPostCheckBox, self.autoPostIntervalSpinBox)
 
         self.verticalLayout.addLayout(formLayout)
 
-        spacer = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        spacer = QtWidgets.QSpacerItem(
+            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
+        )
         self.verticalLayout.addItem(spacer)
 
         self.autoPostCheckBox.stateChanged.connect(self.check_auto_posting)
@@ -124,7 +128,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.usageButton = QtWidgets.QPushButton(self.centralwidget)
         self.usageButton.setText("How to Use")
         self.usageButton.setStyleSheet(
-            '''
+            """
             QPushButton {
                 font-size: 18px;
                 color: white;
@@ -136,17 +140,17 @@ class MainWindow(QtWidgets.QMainWindow):
             QPushButton:hover {
                 background-color: #1565c0;
             }
-            '''
+            """
         )
         self.verticalLayout.addWidget(self.usageButton)
-
 
         self.setCentralWidget(self.centralwidget)
 
         self.postButton.clicked.connect(self.start_worker)
         self.usageButton.clicked.connect(self.show_usage)
 
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             QLabel {
                 font-size: 20px;
                 text-align: center;
@@ -191,8 +195,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 font-size: 20px;
                 color: #000000;
             }
-        """)
-
+        """
+        )
 
     def setupTimer(self):
         self.timer = QtCore.QTimer(self)
@@ -201,7 +205,9 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def check_auto_posting(self):
         if self.autoPostCheckBox.isChecked():
-            interval = self.autoPostIntervalSpinBox.value() * 60000  # convert minutes to milliseconds
+            interval = (
+                self.autoPostIntervalSpinBox.value() * 60000
+            )  # convert minutes to milliseconds
             self.timer.start(interval)
         else:
             self.timer.stop()
@@ -223,94 +229,113 @@ class MainWindow(QtWidgets.QMainWindow):
             try:
                 self.create_wordpress_post(topic, content, username, password, wp_url)
                 self.handle_posting_result(f"[완료] '{topic}'에 대한 글 게시됨")
-                self.progressBar.setValue(int(i/2) * progress_step)
+                self.progressBar.setValue(int(i / 2) * progress_step)
             except Exception as err:
                 self.handle_posting_result(f"[실패] '{topic}'에 대한 글 게시 [실패]: {str(err)}")
 
     def handle_posting_result(self, result):
         # UI 업데이트는 메인 UI 스레드에서 처리해야 함
-        QtCore.QMetaObject.invokeMethod(self, "update_result_textbox", QtCore.Qt.QueuedConnection, QtCore.Q_ARG(str, result))
-
+        QtCore.QMetaObject.invokeMethod(
+            self,
+            "update_result_textbox",
+            QtCore.Qt.QueuedConnection,
+            QtCore.Q_ARG(str, result),
+        )
 
     @QtCore.pyqtSlot(str)
     def update_result_textbox(self, result):
         self.resultTextBox.appendPlainText(result)
-    
+
     def create_wordpress_post(self, topic, content, username, password, wp_url):
         translator = Translator()
-        translated_topic = translator.translate(topic, dest='en').text
+        translated_topic = translator.translate(topic, dest="en").text
         image_url = f"https://source.unsplash.com/featured/?{translated_topic}"
 
-        wordpress_url = wp_url + '/wp-json/wp/v2/posts'
+        wordpress_url = wp_url + "/wp-json/wp/v2/posts"
 
         headers = {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
         }
 
         data = {
-            'title': topic,
-            'content': f'<img src="{image_url}">\n\n{content}',
-            'status': 'publish',
+            "title": topic,
+            "content": f'<img src="{image_url}">\n\n{content}',
+            "status": "publish",
         }
 
-        response = requests.post(wordpress_url, headers=headers, json=data, auth=(username, password))
+        response = requests.post(
+            wordpress_url, headers=headers, json=data, auth=(username, password)
+        )
         response.raise_for_status()
 
     def generate_content(self, topic):
         completion = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system",
-                 "content": "당신은 이제부터 파워블로거 입니다. 사용자가 요구하는 주제에 관련된 블로그 포스팅을 작성하는것이 당신의 역할입니다. 블로그 포스팅의 본문내용만을 작성해야합니다. 본문 내용 외 다른 목차는 작성하지 않습니다. 분량은 최대한 길고 자세하게 작성하세요."},
-                {"role": "user", "content": f"주제는  {topic} 입니다.  {topic} + 에 대한 블로그 글을 작성해주세요. "}
-            ]
+                {
+                    "role": "system",
+                    "content": "당신은 이제부터 파워블로거 입니다. 사용자가 요구하는 주제에 관련된 블로그 포스팅을 작성하는것이 당신의 역할입니다. 블로그 포스팅의 본문내용만을 작성해야합니다. 본문 내용 외 다른 목차는 작성하지 않습니다. 분량은 최대한 길고 자세하게 작성하세요.",
+                },
+                {
+                    "role": "user",
+                    "content": f"주제는  {topic} 입니다.  {topic} + 에 대한 블로그 글을 작성해주세요. ",
+                },
+            ],
         )
-        return completion.choices[0].message['content']
+        return completion.choices[0].message["content"]
 
     def generate_topics(self):
-        topics = self.topicLineEdit.text().split(',')
+        topics = self.topicLineEdit.text().split(",")
         count = int(self.numberSpinBox.value())
         entire_topic_list = []
 
         for topic in topics:
             topic = topic.strip()
-            if topic: 
+            if topic:
                 try:
                     completion = openai.ChatCompletion.create(
                         model="gpt-3.5-turbo",
                         messages=[
-                            {"role": "system",
-                            "content": f"당신은 이제부터 블로그 주제를 생성하는 역할을 맡습니다. 사용자가 제시하는 큰 주제에 대해 블로그 포스팅 주제를 정하고 핵심 포스팅 제목만 출력합니다. 제목은 짧고 핵심적인 내용만 담습니다. 각 주제는 개행으로 구별해야합니다. 출력값은 {count}줄로 출력합니다."},
-                            {"role": "user", "content": f"{topic}에 대한 {count}개의 블로그 주제를 생성해주세요."}
-                        ]
+                            {
+                                "role": "system",
+                                "content": f"당신은 이제부터 블로그 주제를 생성하는 역할을 맡습니다. 사용자가 제시하는 큰 주제에 대해 블로그 포스팅 주제를 정하고 핵심 포스팅 제목만 출력합니다. 제목은 짧고 핵심적인 내용만 담습니다. 각 주제는 개행으로 구별해야합니다. 출력값은 {count}줄로 출력합니다.",
+                            },
+                            {
+                                "role": "user",
+                                "content": f"{topic}에 대한 {count}개의 블로그 주제를 생성해주세요.",
+                            },
+                        ],
                     )
-                    topics_str = completion.choices[0].message['content']
-                    topics_list = [topic.replace('\"', '').strip() for topic in topics_str.split('\n') if topic.strip()]
+                    topics_str = completion.choices[0].message["content"]
+                    topics_list = [
+                        topic.replace('"', "").strip()
+                        for topic in topics_str.split("\n")
+                        if topic.strip()
+                    ]
 
                     for topic in topics_list:
-                        topic_parts = topic.split('. ')
+                        topic_parts = topic.split(". ")
                         if len(topic_parts) > 1:
                             topic_without_number = topic_parts[1]
                         else:
                             topic_without_number = topic_parts[0]
 
-                        topic_without_extra_symbols = topic_without_number.split('-')[0].split(':')[0]
+                        topic_without_extra_symbols = topic_without_number.split("-")[
+                            0
+                        ].split(":")[0]
                         entire_topic_list.append(topic_without_extra_symbols)
                 except Exception as e:
                     return e
         return entire_topic_list
-    
-
-
 
     def show_topics_list(self, topics_list):
-        topics_str = '\n'.join(topics_list)
+        topics_str = "\n".join(topics_list)
         self.resultTextBox.appendPlainText(topics_str)
 
     def start_worker(self):
         topic = self.topicLineEdit.text()
         api_key = self.apiKeyLineEdit.text()
-        post_count = int(self.numberSpinBox.text()) 
+        post_count = int(self.numberSpinBox.text())
         username = self.usernameLineEdit.text()
         password = self.passwordLineEdit.text()
         wp_url = self.wpUrlLineEdit.text()
@@ -333,7 +358,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.worker.taskFinished.connect(self.handle_results)
         self.worker.start()
 
-
     @QtCore.pyqtSlot(str, bool)
     def handle_results(self, result, status):
         if status:
@@ -349,9 +373,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.wpUrlLineEdit.setEnabled(True)
         self.numberSpinBox.setEnabled(True)
 
+
 if __name__ == "__main__":
     import sys
-    
+
     app = QtWidgets.QApplication(sys.argv)
     mainWindow = MainWindow()
     mainWindow.show()
