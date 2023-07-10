@@ -6,6 +6,113 @@ from PyQt5.QtWidgets import QMessageBox
 from googletrans import Translator
 
 
+class LoginDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super(LoginDialog, self).__init__(parent)
+        self.setWindowTitle("로그인")
+
+        layout = QtWidgets.QVBoxLayout()
+
+        # 프로그램 이름 라벨
+        program_name_label = QtWidgets.QLabel("Auto Posting")
+        program_name_label.setStyleSheet(
+            """
+            QLabel {
+                font-size: 24px;
+                font-weight: bold;
+                margin-bottom: 20px;
+            }
+            """
+        )
+        layout.addWidget(program_name_label, alignment=QtCore.Qt.AlignCenter)
+
+        # 로그인 폼
+        login_form_layout = QtWidgets.QFormLayout()
+
+        self.usernameLineEdit = QtWidgets.QLineEdit()
+        self.usernameLineEdit.setStyleSheet(
+            """
+            QLineEdit {
+                font-size: 18px;
+                padding: 5px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+            }
+            """
+        )
+
+        self.passwordLineEdit = QtWidgets.QLineEdit()
+        self.passwordLineEdit.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.passwordLineEdit.setStyleSheet(
+            """
+            QLineEdit {
+                font-size: 18px;
+                padding: 5px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+            }
+            """
+        )
+
+        login_form_layout.addRow("아이디:", self.usernameLineEdit)
+        login_form_layout.addRow("비밀번호:", self.passwordLineEdit)
+
+        layout.addLayout(login_form_layout)
+
+        # 로그인 버튼
+        self.loginButton = QtWidgets.QPushButton("로그인")
+        self.loginButton.setStyleSheet(
+            """
+            QPushButton {
+                font-size: 18px;
+                color: white;
+                background-color: #4287f5;
+                border: none;
+                border-radius: 5px;
+                padding: 8px;
+            }
+            QPushButton:hover {
+                background-color: #1565c0;
+            }
+            """
+        )
+        self.loginButton.clicked.connect(self.handle_login)  # 로그인 버튼 클릭 시 슬롯 호출
+        layout.addWidget(self.loginButton, alignment=QtCore.Qt.AlignCenter)
+
+        self.setLayout(layout)
+
+        self.setStyleSheet(
+            """
+            QDialog {
+                background-color: #f2f2f2;
+            }
+            """
+        )
+
+    def get_username(self):
+        return self.usernameLineEdit.text()
+
+    def get_password(self):
+        return self.passwordLineEdit.text()
+
+    def handle_login(self):
+        username = self.get_username()
+        password = self.get_password()
+
+        # 실제로 사용자 인증 로직을 수행하고 비밀번호 검증
+        if username == "root" and password == "password@":
+            self.login_success()
+        else:
+            QtWidgets.QMessageBox.warning(
+                self, "로그인 실패", "아이디 및 비밀번호가 올바르지 않습니다. 다시 시도해주세요."
+            )
+            self.passwordLineEdit.clear()
+
+    def login_success(self):
+        self.accept()  # 다이얼로그 종료
+        self.close()  # 다이얼로그를 닫음
+
+
 class Worker(QThread):
     taskFinished = pyqtSignal(str, bool)
 
@@ -33,6 +140,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setupUi()
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.start_worker)
+
+        # 로그인 다이얼로그 실행
+        login_dialog = LoginDialog()
+        result = login_dialog.exec_()
+        if result == QtWidgets.QDialog.Accepted:
+            # 인증 체크
+            if not self.authenticate(login_dialog):
+                QMessageBox.warning(self, "로그인 실패", "로그인 인증에 실패하였습니다.")
+                sys.exit()  # 프로그램 종료
+            self.show()
+        else:
+            sys.exit()  # 프로그램 종료
 
     def addRow(self, formLayout, labelText, echoMode=None):
         label = QtWidgets.QLabel(self.centralwidget)
@@ -198,6 +317,46 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         )
 
+    def start_worker(self):
+        topic = self.topicLineEdit.text()
+        api_key = self.apiKeyLineEdit.text()
+        post_count = int(self.numberSpinBox.text())
+        username = self.usernameLineEdit.text()
+        password = self.passwordLineEdit.text()
+        wp_url = self.wpUrlLineEdit.text()
+        if not all([topic, api_key, post_count, username, password, wp_url]):
+            self.resultTextBox.appendPlainText(f"\n [오류] 모든 필드를 유효한 값으로 채워주세요.")
+            return
+        openai.api_key = api_key
+
+        self.postButton.setEnabled(False)
+        self.topicLineEdit.setEnabled(False)
+        self.apiKeyLineEdit.setEnabled(False)
+        self.usernameLineEdit.setEnabled(False)
+        self.passwordLineEdit.setEnabled(False)
+        self.wpUrlLineEdit.setEnabled(False)
+        self.numberSpinBox.setEnabled(False)
+
+        self.progressBar.setValue(0)
+
+        self.worker = Worker(self)
+        self.worker.taskFinished.connect(self.handle_results)
+        self.worker.start()
+
+    def authenticate(self, login_dialog):
+        # 인증 로직을 여기에 구현합니다.
+        # 로그인 다이얼로그에서 사용자가 입력한 아이디와 비밀번호를 가져올 수 있습니다.
+        # 실제 인증을 위한 데이터베이스나 API와 통신하여 인증 여부를 확인합니다.
+        # 예시로 간단한 인증 체크를 수행하도록 작성합니다.
+
+        username = login_dialog.get_username()
+        password = login_dialog.get_password()
+
+        if username == "root" and password == "password@":
+            return True
+        else:
+            return False
+
     def setupTimer(self):
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.start_worker)
@@ -332,32 +491,6 @@ class MainWindow(QtWidgets.QMainWindow):
         topics_str = "\n".join(topics_list)
         self.resultTextBox.appendPlainText(topics_str)
 
-    def start_worker(self):
-        topic = self.topicLineEdit.text()
-        api_key = self.apiKeyLineEdit.text()
-        post_count = int(self.numberSpinBox.text())
-        username = self.usernameLineEdit.text()
-        password = self.passwordLineEdit.text()
-        wp_url = self.wpUrlLineEdit.text()
-        if not all([topic, api_key, post_count, username, password, wp_url]):
-            self.resultTextBox.appendPlainText(f"\n [오류] 모든 필드를 유효한 값으로 채워주세요.")
-            return
-        openai.api_key = api_key
-
-        self.postButton.setEnabled(False)
-        self.topicLineEdit.setEnabled(False)
-        self.apiKeyLineEdit.setEnabled(False)
-        self.usernameLineEdit.setEnabled(False)
-        self.passwordLineEdit.setEnabled(False)
-        self.wpUrlLineEdit.setEnabled(False)
-        self.numberSpinBox.setEnabled(False)
-
-        self.progressBar.setValue(0)
-
-        self.worker = Worker(self)
-        self.worker.taskFinished.connect(self.handle_results)
-        self.worker.start()
-
     @QtCore.pyqtSlot(str, bool)
     def handle_results(self, result, status):
         if status:
@@ -378,6 +511,7 @@ if __name__ == "__main__":
     import sys
 
     app = QtWidgets.QApplication(sys.argv)
+
     mainWindow = MainWindow()
-    mainWindow.show()
-    sys.exit(app.exec_())
+
+    app.exec_()
