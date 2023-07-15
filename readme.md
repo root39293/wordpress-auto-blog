@@ -4,31 +4,21 @@ The Auto Posting program is a PyQt5-based application that automatically generat
 
 ## Usage
 
-1. Login
-   - When the program is executed, a login dialog will be displayed.
-   - Enter your username and password to perform the login. Currently, "root" and "password@" are accepted as valid login credentials for the example.
+1. **Login**: When the program is executed, a login dialog will be displayed. Enter your username and password to log in. Currently, the example accepts "root" as the username and "password@" as the password.
 
-2. Enter Topics
-   - Enter the topics for which you want to generate blog posts in the "Topic" field. Separate multiple topics with commas. Example: Topic 1, Topic 2, Topic 3
+2. **Enter Topics**: Enter the topics for which you want to generate blog posts in the "Topic" field. Separate multiple topics with commas. Example: Topic 1, Topic 2, Topic 3
 
-3. Enter API Key
-   - Enter your OpenAI API key in the "API Key" field. This key is required to use the OpenAI GPT-3.5 model.
+3. **Enter API Key**: Enter your OpenAI API key in the "API Key" field. This key is required to use the OpenAI GPT-3.5 model.
 
-4. Enter WordPress Account Information
-   - Enter your WordPress username and password in the "WordPress Username" and "WordPress Password" fields, respectively. This information is used to publish the posts.
+4. **Enter WordPress Account Information**: Enter your WordPress username and password in the "WordPress Username" and "WordPress Password" fields, respectively. This information is used to publish the posts.
 
-5. Enter WordPress URL
-   - Enter the URL of your WordPress site in the "WordPress URL" field. The URL should not end with a '/'.
+5. **Enter WordPress URL**: Enter the URL of your WordPress site in the "WordPress URL" field. The URL should not end with a '/'.
 
-6. Select Number of Postings
-   - Use the "Number of Posting" spin box to select the number of posts you want to publish. The default value is 2.
+6. **Select Number of Postings**: Use the "Number of Posting" spin box to select the number of posts you want to publish. The default value is 2.
 
-7. Enable Auto Posting (Optional)
-   - Check the "Enable Auto Posting" checkbox and set the auto posting interval to automatically publish posts at regular intervals.
-   - If the "Enable Auto Posting" checkbox is not checked, the posts will be published manually when the "Run" button is clicked.
+7. **Enable Auto Posting (Optional)**: Check the "Enable Auto Posting" checkbox and set the auto posting interval to automatically publish posts at regular intervals.
 
-8. Execution
-   - Click the "Run" button to start the process of generating and publishing the posts.
+8. **Execution**: Click the "Run" button to start the process of generating and publishing the posts.
 
 ## Notes
 
@@ -39,18 +29,20 @@ The Auto Posting program is a PyQt5-based application that automatically generat
 
 
 ## Plugin installation list
-	
-Install WordPress REST API Authentication
-Setting up ID/PW Authentication
+
+- Install WordPress REST API Authentication
+- Setting up ID/PW Authentication
 
 ## Environment setting procedure
 
-- Connect to wp-admin and go to Settings -> Set unique address -> Set unique address structure to post name
+1. Connect to wp-admin and go to Settings -> Set unique address -> Set unique address structure to post name.
 
-## .htaccess setting 
-Paste the following content into the server path .htaccess
-```
-<IfModule mod_rewrite.c>.
+## .htaccess setting
+
+Paste the following content into the server path .htaccess:
+
+```apacheconf
+<IfModule mod_rewrite.c>
 RewriteEngine On
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 RewriteBase /wp/
@@ -62,5 +54,3 @@ CheckURL On # 14 , 15 , 16 Add lines 14 , 15 , 16
 ServerEncoding UTF-8 
 ClientEncoding EUC-KR 
 </IfModule>
-```
-
