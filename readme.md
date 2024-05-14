@@ -1,6 +1,6 @@
-# wp-ap
+# wordpress-auto-blog
 
-The Auto Posting program is a PyQt5-based application that automatically generates and publishes blog posts on user-specified topics.
+The wordpress-auto-blog is a PyQt5-based application that automatically generates and publishes blog posts on user-specified topics.
 
 ## Usage
 
